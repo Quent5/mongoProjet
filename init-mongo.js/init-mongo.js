@@ -1,6 +1,6 @@
 db.createUser({
-    user: "pnourrissier",
-    pwd: "pwdXXX1234",
+    user: "super",
+    pwd: "route",
     roles: [{
         role: "readWrite",
         db: "firstmongodb"

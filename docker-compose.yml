@@ -5,10 +5,20 @@ services:
     container_name: 'mongo-docker'
     environment:
       - MONGO_INITDB_DATABASE=firstmongodb
-      - MONGO_INITDB_USERNAME = root
-      - MONGO_INITDB_PASSWORD = rootpassword
+      - MONGO_INITDB_USERNAME=root
+      - MONGO_INITDB_PASSWORD=rootpassword
     volumes:
       - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
       - ./mongo-volume:/data/db
     ports:
       - '27017-27019:27017-27019'
+
+  php:
+      build:
+        context: ./
+      command: php -S 0.0.0.0:8080
+      working_dir: /app/public
+      ports:
+        - 8080:8080
+      volumes:
+        - .:/app
