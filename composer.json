@@ -1,0 +1,25 @@
+{
+
+    "name": "tdmongodb/app",
+
+    "autoload": {
+
+        "psr-4": {
+
+            "App\\": "src/"
+
+        }
+
+    },
+
+    "require": {
+
+        "mongodb/mongodb": "^1.5",
+
+        "ext-mongodb": "*",
+
+        "ext-json": "*"
+
+    }
+
+}
