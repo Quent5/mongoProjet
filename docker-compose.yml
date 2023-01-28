@@ -35,3 +35,9 @@ services:
       - MONGO_INITDB_PASSWORD=rootpassword
     ports:
     - 27017:27017
+  mongo-express:
+    image: mongo-express:latest
+    networks:
+    - catamongo.net
+    ports:
+    - "8081:8081"

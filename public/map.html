@@ -26,6 +26,14 @@
 
 </main>
 <script>
+
+var parkingIcon = L.icon({
+    iconUrl: 'parking.png',
+    iconSize:     [53, 65], // size of the icon
+    iconAnchor:   [22, 94], // point of the icon which will correspond to marker's location
+    popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+});
+
     var map = L.map('map').setView([51.505, -0.09], 13);
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
@@ -56,7 +64,7 @@ fetch('https://geoservices.grand-nancy.org/arcgis/rest/services/public/VOIRIE_Pa
     console.log(data);
     data.features.forEach(function(parking) {
         console.log(parking);
-        var marker = L.marker([parking.geometry.y, parking.geometry.x]).addTo(map);
+        var marker = L.marker([parking.geometry.y, parking.geometry.x], {icon: parkingIcon}).addTo(map);
         marker.bindPopup(parking.attributes.NOM + " " + parking.attributes.ADRESSE + " -  Places dispos : " + parking.attributes.PLACES + "/" + parking.attributes.CAPACITE).openPopup();
     });
 });
