@@ -7,8 +7,25 @@ $parkings = [];
 
 $db = (new MongoDB\Client('mongodb://mongo'))->selectDatabase('tdmongo');
 $data = json_decode(file_get_contents('https://geoservices.grand-nancy.org/arcgis/rest/services/public/VOIRIE_Parking/MapServer/0/query?where=1%3D1&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=nom%2Cadresse%2Cplaces%2Ccapacite&returnGeometry=true&returnTrueCurves=false&maxAllowableOffset=&geometryPrecision=&outSR=4326&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&resultOffset=&resultRecordCount=&queryByDistance=&returnExtentsOnly=false&datumTransformation=&parameterValues=&rangeValues=&f=pjson'));
-$db->createCollection('parkings');
+
+
+
+// listCollections() : liste de toutes les collections de la base de données
+$collections = $db->listCollections();
+// on vérifie si la collection 'parkings' existe
+$exists = false;
+foreach ($collections as $collection) {
+  if ($collection->getName() == 'parkings') {
+    $exists = true;
+  }
+}
+// si la collection n'existe pas, on la crée
+if (!$exists) $db->createCollection('parkings');
 $db = $db->selectCollection('parkings');
+
+
+
+// on parcourt les données récupérées
 
 foreach ($data->features as $feature) {
   $parking = [
@@ -26,14 +43,22 @@ foreach ($data->features as $feature) {
   ];
   $parkings[] = $parking;
 }
-if (count($parkings) > 0) {
-  $res = $db->insertMany($parkings);
+
+// si le parking n'existe pas, on l'ajoute
+// si le parking existe, on le met à jour
+foreach ($parkings as $parking) {
+  $db->updateOne(
+    ['name' => $parking['name']],
+    ['$set' => $parking],
+    ['upsert' => true]
+  );
 }
+
 
 $test = $db->find();
 
 foreach ($test as $t) {
-  $parkings[] = $t;
+  $parking[] = $t;
 
 }
 
