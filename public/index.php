@@ -4,30 +4,46 @@ require __DIR__ . '/../vendor/autoload.php';
 
 // Code source permettant d'accéder aux données parking du Grand Nancy
 $parkings = [];
+$velos = [];
 
 $db = (new MongoDB\Client('mongodb://mongo'))->selectDatabase('tdmongo');
-$data = json_decode(file_get_contents('https://geoservices.grand-nancy.org/arcgis/rest/services/public/VOIRIE_Parking/MapServer/0/query?where=1%3D1&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=nom%2Cadresse%2Cplaces%2Ccapacite&returnGeometry=true&returnTrueCurves=false&maxAllowableOffset=&geometryPrecision=&outSR=4326&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&resultOffset=&resultRecordCount=&queryByDistance=&returnExtentsOnly=false&datumTransformation=&parameterValues=&rangeValues=&f=pjson'));
 
+// récupération des données parking du Grand Nancy
+$dataParking = json_decode(file_get_contents('https://geoservices.grand-nancy.org/arcgis/rest/services/public/VOIRIE_Parking/MapServer/0/query?where=1%3D1&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=nom%2Cadresse%2Cplaces%2Ccapacite&returnGeometry=true&returnTrueCurves=false&maxAllowableOffset=&geometryPrecision=&outSR=4326&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&resultOffset=&resultRecordCount=&queryByDistance=&returnExtentsOnly=false&datumTransformation=&parameterValues=&rangeValues=&f=pjson'));
+
+// récupération des données VélOstan du Grand Nancy
+$dataVelostan = json_decode(file_get_contents('https://api.jcdecaux.com/vls/v3/stations?apiKey=frifk0jbxfefqqniqez09tw4jvk37wyf823b5j1i&contract=nancy'));
 
 
 // listCollections() : liste de toutes les collections de la base de données
 $collections = $db->listCollections();
 // on vérifie si la collection 'parkings' existe
-$exists = false;
+$existsParking = false;
 foreach ($collections as $collection) {
   if ($collection->getName() == 'parkings') {
-    $exists = true;
+    $existsParking = true;
   }
 }
 // si la collection n'existe pas, on la crée
-if (!$exists) $db->createCollection('parkings');
-$db = $db->selectCollection('parkings');
+if (!$existsParking) $db->createCollection('parkings');
+$dbParking = $db->selectCollection('parkings');
+
+// on vérifie si la collection 'velo' existe
+// $existsVelo = false;
+// foreach ($collections as $collection) {
+//   if ($collection->getName() == 'velos') {
+//     $existsVelo= true;
+//   }
+// }
+// // si la collection n'existe pas, on la crée
+// if (!$existsVelo) $db->createCollection('velos');
+// $db = $db->selectCollection('velos');
 
 
 
 // on parcourt les données récupérées
 
-foreach ($data->features as $feature) {
+foreach ($dataParking->features as $feature) {
   $parking = [
     'name' => $feature->attributes->NOM,
     'address' => $feature->attributes->ADRESSE,
@@ -44,10 +60,11 @@ foreach ($data->features as $feature) {
   $parkings[] = $parking;
 }
 
+
 // si le parking n'existe pas, on l'ajoute
 // si le parking existe, on le met à jour
 foreach ($parkings as $parking) {
-  $db->updateOne(
+  $dbParking->updateOne(
     ['name' => $parking['name']],
     ['$set' => $parking],
     ['upsert' => true]
@@ -55,12 +72,27 @@ foreach ($parkings as $parking) {
 }
 
 
-$test = $db->find();
+// $myPark = $dbParking->find();
 
-foreach ($test as $t) {
-  $parking[] = $t;
+// foreach ($myPark as $t) {
+//   $parking[] = $t;
 
-}
+// }
+
+
+foreach ($dataVelostan as $stan) {
+  $velo = [
+    'name' => $stan->name,
+    'geometry' => [
+      'type' => 'Point',
+      'coordinates' => $stan->position,
+      'totalStands' => $stan->totalStands->availabilities->stands,
+      'availableBikes' => $stan->totalStands->availabilities->bikes,
+      'capacity' => $stan->totalStands->capacity,
+    ],
+  ];
+  $velos[] = $velo;
+  }
 
 
 
@@ -106,7 +138,7 @@ var parkingIcon = L.icon({
 
     var markers = L.markerClusterGroup();
     <?php foreach ($parkings as $parking) { ?>
-      var marker = L.marker([<?php echo $parking['geometry']->y; ?>, <?php echo $parking['geometry']->x; ?>], {icon: parkingIcon}).bindPopup('<?php echo $parking['name']." - ".$parking['address']." - Places ".$parking['places']."/".$t['capacity']; ?>');
+      var marker = L.marker([<?php echo $parking['geometry']->y; ?>, <?php echo $parking['geometry']->x; ?>], {icon: parkingIcon}).bindPopup('<?php echo $parking['name']." - ".$parking['address']." - Places ".$parking['places']."/".$parking['capacity']; ?>');
       markers.addLayer(marker);
     <?php } ?>
     map.addLayer(markers);
