@@ -1,4 +1,8 @@
-Commandes:
+Projet MongoDB réalisé par :
+- Axel LEGUYEN
+- Quentin DAL BON
+
+Commandes pour initialiser le projet :
 
 1# 
 
@@ -10,7 +14,5 @@ docker-compose up
 3#
 docker exec my-container composer install /var/www/html
 
-
-rm -rf directoryname
 
 docker-compose exec --workdir / php /bin/bash

@@ -29,19 +29,19 @@ if (!$existsParking) $db->createCollection('parkings');
 $dbParking = $db->selectCollection('parkings');
 
 // on vérifie si la collection 'velo' existe
-// $existsVelo = false;
-// foreach ($collections as $collection) {
-//   if ($collection->getName() == 'velos') {
-//     $existsVelo= true;
-//   }
-// }
-// // si la collection n'existe pas, on la crée
-// if (!$existsVelo) $db->createCollection('velos');
-// $db = $db->selectCollection('velos');
+$existsVelo = false;
+foreach ($collections as $collection) {
+  if ($collection->getName() == 'velos') {
+    $existsVelo = true;
+  }
+}
+// si la collection n'existe pas, on la crée
+if (!$existsVelo) $db->createCollection('velos');
+$dbVelo = $db->selectCollection('velos');
 
 
 
-// on parcourt les données récupérées
+// on parcourt les données récupérées - Parking
 
 foreach ($dataParking->features as $feature) {
   $parking = [
@@ -71,7 +71,6 @@ foreach ($parkings as $parking) {
   );
 }
 
-
 // $myPark = $dbParking->find();
 
 // foreach ($myPark as $t) {
@@ -83,65 +82,93 @@ foreach ($parkings as $parking) {
 foreach ($dataVelostan as $stan) {
   $velo = [
     'name' => $stan->name,
-    'geometry' => [
-      'type' => 'Point',
-      'coordinates' => $stan->position,
-      'totalStands' => $stan->totalStands->availabilities->stands,
-      'availableBikes' => $stan->totalStands->availabilities->bikes,
-      'capacity' => $stan->totalStands->capacity,
-    ],
+    'coordinates' => $stan->position,
+    'totalStands' => $stan->totalStands->availabilities->stands,
+    'availableBikes' => $stan->totalStands->availabilities->bikes,
+    'capacity' => $stan->totalStands->capacity,
   ];
   $velos[] = $velo;
-  }
+}
 
+// si le vélo n'existe pas, on l'ajoute
+// si le vélo existe, on le met à jour
+foreach ($velos as $velo) {
+  $dbVelo->updateOne(
+    ['name' => $velo['name']],
+    ['$set' => $velo],
+    ['upsert' => true]
+  );
+}
 
 
 ?>
 
-<!-- affichage des données parking du Grand Nancy -->
+<!-- affichage des données du Grand Nancy -->
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
-<meta charset="utf-8">
-  <title>Carte des parkings du Grand Nancy</title>
+  <meta charset="utf-8">
+  <title>Carte des points d'intérêts du Grand Nancy</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.5.1/leaflet.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.5.1/leaflet.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.4.1/leaflet.markercluster.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.4.1/MarkerCluster.Default.css"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.4.1/MarkerCluster.css"></script>
   <style>
-    html, body {
+    html,
+    body {
       height: 100%;
       margin: 0;
     }
+
     #map {
       width: 100%;
       height: 100%;
     }
   </style>
 </head>
+
 <body>
   <div id="map"></div>
   <script>
+    var parkingIcon = L.icon({
+      iconUrl: 'parking.png',
+      iconSize: [53, 65], // size of the icon
+      iconAnchor: [22, 94], // point of the icon which will correspond to marker's location
+      popupAnchor: [-3, -76] // point from which the popup should open relative to the iconAnchor
+    });
 
-var parkingIcon = L.icon({
-    iconUrl: 'parking.png',
-    iconSize:     [53, 65], // size of the icon
-    iconAnchor:   [22, 94], // point of the icon which will correspond to marker's location
-    popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
-});
+    var veloIcon = L.icon({
+      iconUrl: 'velo.png',
+      iconSize: [53, 65], // size of the icon
+      iconAnchor: [22, 94], // point of the icon which will correspond to marker's location
+      popupAnchor: [-3, -76] // point from which the popup should open relative to the iconAnchor
+    });
 
-    var map = L.map('map').setView([48.688, 6.186], 15);
+
+    var map = L.map('map').setView([48.688, 6.186], 13.6);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: 'Map data © <a href="https://openstreetmap.org">OpenStreetMap</a> contributors'
     }).addTo(map);
 
-    var markers = L.markerClusterGroup();
+    var markers = L.markerClusterGroup({
+      maxClusterRadius: 0
+    });
     <?php foreach ($parkings as $parking) { ?>
-      var marker = L.marker([<?php echo $parking['geometry']->y; ?>, <?php echo $parking['geometry']->x; ?>], {icon: parkingIcon}).bindPopup('<?php echo $parking['name']." - ".$parking['address']." - Places ".$parking['places']."/".$parking['capacity']; ?>');
+      var marker = L.marker([<?php echo $parking['geometry']->y; ?>, <?php echo $parking['geometry']->x; ?>], {
+        icon: parkingIcon
+      }).bindPopup('<?php echo '<b>'.$parking['name'] . "</b><br>" . $parking['address'] . "<br>Places libres : " . $parking['places'] . "/" . $parking['capacity']; ?>');
       markers.addLayer(marker);
+    <?php } ?>
+    <?php foreach ($velos as $velo) { ?>
+      var markerVelo = L.marker([<?php echo $velo['coordinates']->latitude; ?>, <?php echo $velo['coordinates']->longitude; ?>], {
+        icon: veloIcon
+      }).bindPopup("<?php echo '<b>'. $velo["name"] . '</b><br>' . $velo["availableBikes"] . ' vélos libres / ' . $velo["capacity"] . ' places'; ?>");
+      markers.addLayer(markerVelo);
     <?php } ?>
     map.addLayer(markers);
   </script>
 </body>
+
 </html>
