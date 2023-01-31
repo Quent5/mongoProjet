@@ -138,7 +138,7 @@ foreach ($velos as $velo) {
     $veloDB[] = $bikedb;
   }
 
-  // on crée un tableau avec les données des parkings de MariaDB
+  // on crée un tableau avec les données des parkings de MongoDB
   foreach ($parkingDB as $park) {
     $parking = [
       'name' => $park['name'],
@@ -151,7 +151,7 @@ foreach ($velos as $velo) {
     $parkingsDB[] = $parking;
   }
 
-  // on crée un tableau avec les données des vélos de MariaDB
+  // on crée un tableau avec les données des vélos de MongoDB
   foreach ($veloDB as $velo) {
     $velo = [
       'name' => $velo['name'],
