@@ -11,8 +11,11 @@ docker-compose build
 2#
 docker-compose up
 
-3#
-docker exec my-container composer install /var/www/html
+3# 
 
+docker exec -ti containerID bash
 
-docker-compose exec --workdir / php /bin/bash
+4#
+
+composer install
+
