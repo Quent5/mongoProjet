@@ -14,7 +14,7 @@ services:
       - 8080:8080
     volumes:
       - .:/var/www/
-    working_dir: /var/www/
+    working_dir: /var/www/public
     networks:
       - catamongo.net
 

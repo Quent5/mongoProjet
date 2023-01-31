@@ -69,14 +69,9 @@ foreach ($parkings as $parking) {
     ['$set' => $parking],
     ['upsert' => true]
   );
+  $parkings[] = [];
 }
 
-// $myPark = $dbParking->find();
-
-// foreach ($myPark as $t) {
-//   $parking[] = $t;
-
-// }
 
 
 foreach ($dataVelostan as $stan) {
@@ -98,6 +93,7 @@ foreach ($velos as $velo) {
     ['$set' => $velo],
     ['upsert' => true]
   );
+  $velos[] = [];
 }
 
 
@@ -130,6 +126,43 @@ foreach ($velos as $velo) {
 </head>
 
 <body>
+  <?php
+  // on récupère les données de la base de données MongoDB
+  $myPark = $dbParking->find();
+  foreach ($myPark as $parkdb) {
+    $parkingDB[] = $parkdb;
+  }
+
+  $myVelo = $dbVelo->find();
+  foreach ($myVelo as $bikedb) {
+    $veloDB[] = $bikedb;
+  }
+
+  // on crée un tableau avec les données des parkings de MariaDB
+  foreach ($parkingDB as $park) {
+    $parking = [
+      'name' => $park['name'],
+      'address' => $park['address'],
+      'description' => $park['description'],
+      'geometry' => $park['geometry'],
+      'places' => $park['places'],
+      'capacity' => $park['capacity'],
+    ];
+    $parkingsDB[] = $parking;
+  }
+
+  // on crée un tableau avec les données des vélos de MariaDB
+  foreach ($veloDB as $velo) {
+    $velo = [
+      'name' => $velo['name'],
+      'coordinates' => $velo['coordinates'],
+      'totalStands' => $velo['totalStands'],
+      'availableBikes' => $velo['availableBikes'],
+      'capacity' => $velo['capacity'],
+    ];
+    $velosDB[] = $velo;
+  }
+  ?>
   <div id="map"></div>
   <script>
     var parkingIcon = L.icon({
@@ -155,13 +188,13 @@ foreach ($velos as $velo) {
     var markers = L.markerClusterGroup({
       maxClusterRadius: 0
     });
-    <?php foreach ($parkings as $parking) { ?>
+    <?php foreach ($parkingsDB as $parking) { ?>
       var marker = L.marker([<?php echo $parking['geometry']->y; ?>, <?php echo $parking['geometry']->x; ?>], {
         icon: parkingIcon
       }).bindPopup('<?php echo '<b>'.$parking['name'] . "</b><br>" . $parking['address'] . "<br>Places libres : " . $parking['places'] . "/" . $parking['capacity']; ?>');
       markers.addLayer(marker);
     <?php } ?>
-    <?php foreach ($velos as $velo) { ?>
+    <?php foreach ($velosDB as $velo) { ?>
       var markerVelo = L.marker([<?php echo $velo['coordinates']->latitude; ?>, <?php echo $velo['coordinates']->longitude; ?>], {
         icon: veloIcon
       }).bindPopup("<?php echo '<b>'. $velo["name"] . '</b><br>' . $velo["availableBikes"] . ' vélos libres / ' . $velo["capacity"] . ' places'; ?>");
